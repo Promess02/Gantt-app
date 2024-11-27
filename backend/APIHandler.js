@@ -3,10 +3,13 @@ const router = express.Router();
 const authenticateToken = require('../middleware/auth.js');
 const ProjectDAO = require('./DAO/projectDAO.js');
 const AuthDAO = require('./DAO/AuthDAO.js');
+const jwt = require('jsonwebtoken');
 
 const dbPath = '../ganttifyApp.db';
 const projectDAO = new ProjectDAO(dbPath);
 const authDAO = new AuthDAO(dbPath);
+
+const secretKey = 'my_secret_key';
 
 // Register a new user
 router.post('/register', (req, res) => {
@@ -15,7 +18,8 @@ router.post('/register', (req, res) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
-        res.status(201).json(result);
+        const token = jwt.sign({ id: user.user_id, email: user.email }, secretKey, { expiresIn: '1h' });
+        res.status(201).json(token);
     });
 });
 
@@ -26,7 +30,8 @@ router.post('/login', (req, res) => {
         if (err) {
             return res.status(401).json({ error: err.message });
         }
-        res.status(200).json(user);
+        const token = jwt.sign({ id: user.user_id, email: user.email }, secretKey, { expiresIn: '1h' });
+        res.status(200).json(token);
     });
 });
 
