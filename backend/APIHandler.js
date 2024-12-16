@@ -18,7 +18,7 @@ router.post('/register', (req, res) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
-        const token = jwt.sign({ id: user.user_id, email: user.email }, secretKey, { expiresIn: '1h' });
+        const token = jwt.sign({ id: user.user_id, email: user.email }, secretKey, { expiresIn: '24h' });
         res.status(201).json(token);
     });
 });
@@ -30,8 +30,8 @@ router.post('/login', (req, res) => {
         if (err) {
             return res.status(401).json({ error: err.message });
         }
-        const token = jwt.sign({ id: user.user_id, email: user.email }, secretKey, { expiresIn: '1h' });
-        res.status(200).json(token);
+        const token = jwt.sign({ id: user.user_id, email: user.email }, secretKey, { expiresIn: '24h' });
+        res.status(200).json({ token, user });
     });
 });
 
@@ -54,6 +54,16 @@ router.get('/projects', authenticateToken, (req, res) => {
             return res.status(500).json({ error: err.message });
         }
         res.status(200).json(projects);
+    });
+});
+
+router.get('/projects/:projectId/workers', authenticateToken, (req, res) => {
+    const projectId = req.params.projectId;
+    projectDAO.getAllWorkersForProject(projectId, (err, workers) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.status(200).json(workers);
     });
 });
 
@@ -83,12 +93,23 @@ router.post('/projects', authenticateToken, (req, res) => {
 // Update a project (with all tasks updated)
 router.put('/projects/:projectId', authenticateToken, (req, res) => {
     const projectId = req.params.projectId;
-    const { projectName, projectDescription, tasks } = req.body;
-    projectDAO.updateProject(projectId, projectName, projectDescription, tasks, (err) => {
+    const { project_name: projectName, project_description: projectDescription, tasks, workers } = req.body;
+    projectDAO.updateProject(projectId, projectName, projectDescription, tasks, workers, (err) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
         res.status(200).json({ message: 'Project and tasks updated successfully' });
+    });
+});
+
+router.put('/projects/:projectId/changeName', authenticateToken, (req, res) => {
+    const projectId = req.params.projectId;
+    const { project_name: projectName } = req.body;
+    projectDAO.changeProjectName(projectId, projectName, (err) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.status(200).json({ message: 'Project name updated successfully' });
     });
 });
 
