@@ -80,9 +80,9 @@ router.get('/projects/:projectId/tasks', authenticateToken, (req, res) => {
 
 // Create and save a new project
 router.post('/projects', authenticateToken, (req, res) => {
-    const { projectName, projectDescription } = req.body;
+    const { projectName, projectDescription, startDate } = req.body;
     const userId = req.user.id;
-    projectDAO.createAndSaveNewProject(projectName, projectDescription, userId, (err, result) => {
+    projectDAO.createAndSaveNewProject(projectName, projectDescription, startDate, userId, (err, result) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }

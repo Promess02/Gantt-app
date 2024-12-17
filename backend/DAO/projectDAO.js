@@ -41,13 +41,29 @@ class ProjectDAO {
         });
     }
 
-    createAndSaveNewProject(projectName, projectDescription, userId, callback) {
-        const sql = `INSERT INTO project (project_name, project_description, user_id) VALUES (?, ?, ?)`;
-        this.db.run(sql, [projectName, projectDescription, userId], function(err) {
+    createAndSaveNewProject(projectName, projectDescription, start_date, userId, callback) {
+        const getMaxProjectIdSql = `SELECT MAX(project_id) as maxProjectId FROM project`;
+        this.db.get(getMaxProjectIdSql, [], (err, row) => {
             if (err) {
                 return callback(err);
             }
-            callback(null, {project_name: projectName, project_id: this.lastID, description: projectDescription});
+            const newProjectId = (row.maxProjectId || 0) + 1;
+            const sql = `INSERT INTO project (project_id, project_name, project_description, user_id) VALUES (?, ?, ?, ?)`;
+            this.db.run(sql, [newProjectId, projectName, projectDescription, userId], function(err) {
+                if (err) {
+                    return callback(err);
+                }
+                const insertTaskSql = `INSERT INTO task (task_index, name, days, start_date, end_date, hours, worker, parent, previous, project_id, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                this.db.run(insertTaskSql, ['1', 'First task', 0, start_date, start_date, 0, '', '', '', newProjectId, ''], (err) => {
+                    if (err) {
+                        console.log(err);
+                        return callback(err);
+                    } else {
+                        console.log('Task inserted: First task');
+                    }
+                });
+                callback(null, {project_id: newProjectId});
+            }.bind(this));
         });
     }
 
